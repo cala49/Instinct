@@ -1,17 +1,28 @@
 from lexer import Lexer
+from parser import Parser
+from errors import InstinctError
 
 
 source = """
+creature Pirate
+faction StrawHats
+health 100
+vision 5
+lifespan 500
+
 start:
-x = 5
-if x >= 3 goto attack_enemy
-say("hello")
-# comentario
 """
 
 
-lexer = Lexer(source)
-tokens = lexer.tokenize()
+try:
+    lexer = Lexer(source)
+    tokens = lexer.tokenize()
 
-for token in tokens:
-    print(token)
+    parser = Parser(tokens)
+    program = parser.parse()
+
+    print("claves cargadas correctamente:")
+    print(program.header)
+
+except InstinctError as error:
+    print(f"Error: {error}")

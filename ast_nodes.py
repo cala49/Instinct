@@ -139,9 +139,9 @@ class CreatureHeader:
     faction: str
     health: int
     vision: int
-    livespan: int
+    lifespan: int
 
 @dataclass 
 class Program:
     header: CreatureHeader
-    Statements: list[Statement]
+    statements: list[Statement]

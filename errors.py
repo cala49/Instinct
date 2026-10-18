@@ -1,4 +1,4 @@
-class InsticError(Exception):
+class InstinctError(Exception):
     """Errores Basicos de Instic"""
 
     def __init__(self, message:str, line:int |None = None):
@@ -10,14 +10,14 @@ class InsticError(Exception):
         else:
             super().__init__(message)
 
-class LexerError(InsticError):
+class LexerError(InstinctError):
     pass
 
-class ParserError(InsticError):
+class ParserError(InstinctError):
     pass
 
-class SemanticError(InsticError):
+class SemanticError(InstinctError):
     pass
 
-class InsticRuntimeError(InsticError):
+class InstinctRuntimeError(InstinctError):
     pass
