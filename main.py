@@ -1,5 +1,6 @@
 from lexer import Lexer
 from parser import Parser
+from semantic import SemanticAnalyzer
 from errors import InstinctError
 
 
@@ -11,6 +12,18 @@ vision 5
 lifespan 500
 
 start:
+steps = 0
+
+walk:
+if health < 20 goto flee
+move(1, 0, 2)
+steps = steps + 1
+goto start
+
+flee:
+say("Run!")
+wait(1)
+goto start
 """
 
 
@@ -21,8 +34,10 @@ try:
     parser = Parser(tokens)
     program = parser.parse()
 
-    print("claves cargadas correctamente:")
-    print(program.header)
+    semantic = SemanticAnalyzer(program)
+    semantic.validate()
+
+    print("Programa válido")
 
 except InstinctError as error:
     print(f"Error: {error}")
