@@ -134,3 +134,13 @@ def add_object(self, obj, x: int, y: int):
     cell.object = obj
 
     return True
+
+def remove_object(self, x: int, y: int):
+    cell = self.get_cell(x, y)
+
+    if cell is None:
+        return False
+
+    cell.object = None
+
+    return True
