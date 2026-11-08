@@ -1,4 +1,5 @@
 from interpreter import Interpreter
+from perceptions import PerceptionManager
 
 
 # ============================================================
@@ -66,11 +67,13 @@ class Creature:
     # TURNO
     # ========================================================
 
-    def take_turn(self):
+    def take_turn(self, world):
         if not self.alive:
             return None, []
 
-        self.update_basic_perceptions()
+        self.interpreter.context.bind_world(self, world)
+
+        PerceptionManager().update(self, world)
 
         if self.wait_remaining > 0:
             self.wait_remaining -= 1

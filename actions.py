@@ -74,35 +74,27 @@ class AttackAction(Action):
     def execute(self, creature, world, arguments):
         dx, dy, damage = arguments
 
-        self.validate_arguments(
-            dx,
-            dy,
-            damage
-        )
+        self.validate_arguments(dx, dy, damage)
 
         target_x = creature.x + dx
         target_y = creature.y + dy
 
-        if not world.is_inside(
-            target_x,
-            target_y
-        ):
+        if not world.is_inside(target_x, target_y):
             return
 
-        cell = world.get_cell(
-            target_x,
-            target_y
-        )
+        cell = world.get_cell(target_x, target_y)
+
+        if dx == 0 and dy == 0:
+            cell.terrain.receive_damage(damage)
+            return
 
         # Criatura
         if cell.creature is not None:
             target = cell.creature
-
             target.receive_damage(damage)
 
             if not target.alive:
                 world.remove_creature(target)
-
             return
 
         # Objeto
@@ -111,63 +103,20 @@ class AttackAction(Action):
 
             if cell.object.destroyed:
                 cell.object = None
-
             return
 
         # Terreno
         cell.terrain.receive_damage(damage)
 
-    def execute(self, creature, world, arguments):
-        dx, dy, damage = arguments
-
-        self.validate_arguments(
-            dx,
-            dy,
-            damage
-        )
-
-        target_x = creature.x + dx
-        target_y = creature.y + dy
-
-        if not world.is_inside(
-            target_x,
-            target_y
-        ):
-            return
-
-        cell = world.get_cell(
-            target_x,
-            target_y
-        )
-
-        if cell.creature is not None:
-            target = cell.creature
-
-            target.receive_damage(damage)
-
-            if not target.alive:
-                world.remove_creature(target)
-
-
     def validate_arguments(self, dx, dy, damage):
-
-        if not all(
-            isinstance(value, int)
-            for value in (dx, dy, damage)
-        ):
-            raise InstinctRuntimeError(
-                "'attack' requiere argumentos numéricos"
-            )
+        if not all(isinstance(value, int) for value in (dx, dy, damage)):
+            raise InstinctRuntimeError("'attack' requiere argumentos numéricos")
 
         if dx not in {-1, 0, 1}:
-            raise InstinctRuntimeError(
-                "'dx' debe ser -1, 0 o 1"
-            )
+            raise InstinctRuntimeError("'dx' debe ser -1, 0 o 1")
 
         if dy not in {-1, 0, 1}:
-            raise InstinctRuntimeError(
-                "'dy' debe ser -1, 0 o 1"
-            )
+            raise InstinctRuntimeError("'dy' debe ser -1, 0 o 1")
 
 # ============================================================
 # CONSUME
@@ -178,31 +127,19 @@ class ConsumeAction(Action):
     def execute(self, creature, world, arguments):
         dx, dy, damage, heal = arguments
 
-        self.validate_arguments(
-            dx,
-            dy,
-            damage,
-            heal
-        )
+        self.validate_arguments(dx, dy, damage, heal)
 
         target_x = creature.x + dx
         target_y = creature.y + dy
 
-        if not world.is_inside(
-            target_x,
-            target_y
-        ):
+        if not world.is_inside(target_x, target_y):
             return
 
-        cell = world.get_cell(
-            target_x,
-            target_y
-        )
+        cell = world.get_cell(target_x, target_y)
 
         # ----------------------------------------------------
         # CASO ESPECIAL: (0, 0)
         # ----------------------------------------------------
-        # Consume el terreno debajo de la propia criatura.
 
         if dx == 0 and dy == 0:
             cell.terrain.receive_damage(damage)
@@ -247,35 +184,18 @@ class ConsumeAction(Action):
         creature.heal(heal)
 
 
-    def validate_arguments(
-        self,
-        dx,
-        dy,
-        damage,
-        heal
-    ):
+    def validate_arguments(self, dx, dy, damage, heal):
         if not all(
             isinstance(value, int)
-            for value in (
-                dx,
-                dy,
-                damage,
-                heal
-            )
+            for value in (dx, dy, damage, heal)
         ):
-            raise InstinctRuntimeError(
-                "'consume' requiere argumentos numéricos"
-            )
+            raise InstinctRuntimeError("'consume' requiere argumentos numéricos")
 
         if dx not in {-1, 0, 1}:
-            raise InstinctRuntimeError(
-                "'dx' debe ser -1, 0 o 1"
-            )
+            raise InstinctRuntimeError("'dx' debe ser -1, 0 o 1")
 
         if dy not in {-1, 0, 1}:
-            raise InstinctRuntimeError(
-                "'dy' debe ser -1, 0 o 1"
-            )
+            raise InstinctRuntimeError("'dy' debe ser -1, 0 o 1")
         
 # ============================================================
 # WAIT
@@ -296,9 +216,7 @@ class WaitAction(Action):
 
     def validate_arguments(self, n):
         if not isinstance(n, int):
-            raise InstinctRuntimeError(
-                "'wait' requiere un argumento numérico"
-            )
+            raise InstinctRuntimeError("'wait' requiere un argumento numérico")
 
 # ============================================================
 # SAY
@@ -311,9 +229,7 @@ class SayAction(Action):
 
         message = str(value)
 
-        world.logs.append(
-            f"{creature.species}: {message}"
-        )
+        world.logs.append(f"{creature.species}: {message}")
 
 # ============================================================
 # ROAR
@@ -335,9 +251,7 @@ class RoarAction(Action):
 
         world.roars.append(roar)
 
-        world.logs.append(
-            f"{creature.species} roars: {message}"
-        )
+        world.logs.append(f"{creature.species} roars: {message}")
 
 # ============================================================
 # REPRODUCE
@@ -348,29 +262,19 @@ class ReproduceAction(Action):
     def execute(self, creature, world, arguments):
         dx, dy, health = arguments
 
-        self.validate_arguments(
-            dx,
-            dy,
-            health
-        )
+        self.validate_arguments(dx, dy, health)
 
         target_x = creature.x + dx
         target_y = creature.y + dy
 
-        # La reproducción siempre es a una casilla adyacente.
+        # Siempre una casilla adyacente
         if dx == 0 and dy == 0:
             return
 
-        if not world.is_inside(
-            target_x,
-            target_y
-        ):
+        if not world.is_inside(target_x, target_y):
             return
 
-        cell = world.get_cell(
-            target_x,
-            target_y
-        )
+        cell = world.get_cell(target_x, target_y)
 
         # La casilla debe tener únicamente terreno.
         if cell.is_occupied:
@@ -386,16 +290,11 @@ class ReproduceAction(Action):
             y=target_y
         )
 
-        # La cría nace con la vida indicada en reproduce(),
-        # no con la vida inicial de la cabecera.
+        # La cría nace con la vida indicada en reproduce()
         child.health = health
-
         # Edad inicial.
         child.age = 0
-
-        # El constructor ya crea un Interpreter nuevo,
-        # por lo que sus variables empiezan vacías.
-
+        # El constructor ya crea un Interpreter nuevo.
         added = world.add_creature(child)
 
         if not added:
@@ -404,33 +303,18 @@ class ReproduceAction(Action):
         creature.health -= health
 
 
-    def validate_arguments(
-        self,
-        dx,
-        dy,
-        health
-    ):
+    def validate_arguments(self, dx, dy, health):
         if not all(
             isinstance(value, int)
-            for value in (
-                dx,
-                dy,
-                health
-            )
+            for value in (dx, dy, health)
         ):
-            raise InstinctRuntimeError(
-                "'reproduce' requiere argumentos numéricos"
-            )
+            raise InstinctRuntimeError("'reproduce' requiere argumentos numéricos")
 
         if dx not in {-1, 0, 1}:
-            raise InstinctRuntimeError(
-                "'dx' debe ser -1, 0 o 1"
-            )
+            raise InstinctRuntimeError("'dx' debe ser -1, 0 o 1")
 
         if dy not in {-1, 0, 1}:
-            raise InstinctRuntimeError(
-                "'dy' debe ser -1, 0 o 1"
-            )
+            raise InstinctRuntimeError("'dy' debe ser -1, 0 o 1")
 
 
 # ============================================================
@@ -447,36 +331,22 @@ ACTIONS = {
     "reproduce": ReproduceAction(),
 }
 
-def execute_action(
-    action_request,
-    creature,
-    world
-):
-    action = ACTIONS.get(
-        action_request.name
-    )
+def execute_action(action_request, creature, world):
+    action = ACTIONS.get(action_request.name)
 
     if action is None:
         raise InstinctRuntimeError(
-            f"Acción desconocida "
-            f"'{action_request.name}'",
-            action_request.line
-        )
+            f"Acción desconocida'{action_request.name}'",action_request.line)
 
-    action.execute(
-        creature,
-        world,
-        action_request.arguments
-    )
+    try:
+        action.execute(creature, world, action_request.arguments)
 
-def execute_free_actions(
-    free_actions,
-    creature,
-    world
-):
+    except InstinctRuntimeError as error:
+
+        if error.line is None:
+            raise InstinctRuntimeError(error.message, action_request.line)
+        raise
+
+def execute_free_actions(free_actions, creature, world):
     for action_request in free_actions:
-        execute_action(
-            action_request,
-            creature,
-            world
-        )
+        execute_action(action_request, creature, world)

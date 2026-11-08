@@ -122,25 +122,25 @@ class World:
 
         return True
 
-def add_object(self, obj, x: int, y: int):
-    if not self.is_inside(x, y):
-        return False
+    def add_object(self, obj, x: int, y: int):
+        if not self.is_inside(x, y):
+            return False
 
-    cell = self.get_cell(x, y)
+        cell = self.get_cell(x, y)
 
-    if cell.is_occupied:
-        return False
+        if cell.is_occupied:
+            return False
 
-    cell.object = obj
+        cell.object = obj
 
-    return True
+        return True
 
-def remove_object(self, x: int, y: int):
-    cell = self.get_cell(x, y)
+    def remove_object(self, x: int, y: int):
+        cell = self.get_cell(x, y)
 
-    if cell is None:
-        return False
+        if cell is None:
+            return False
 
-    cell.object = None
+        cell.object = None
 
-    return True
+        return True

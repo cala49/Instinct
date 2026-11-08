@@ -1,82 +1,46 @@
-from lexer import Lexer
-from parser import Parser
-from semantic import SemanticAnalyzer
+from loaders import ProjectLoader
 from creature import Creature
-from world import World
-from actions import (
-    execute_action,
-    execute_free_actions,
+from simulator import Simulator
+
+
+loader = ProjectLoader(".")
+loader.load_all()
+
+print("CRIATURAS:", loader.creatures.keys())
+print("LOGS DE CARGA:", loader.logs)
+
+world = loader.maps["East Blue"]
+program = loader.creatures["ErrorTest"]
+
+creature = Creature(
+    program=program,
+    x=0,
+    y=0
 )
-from errors import InstinctError
 
+world.add_creature(creature)
 
-source = """
-creature Pirate
-faction StrawHats
-health 100
-vision 5
-lifespan 500
+simulator = Simulator(
+    world,
+    seed=42
+)
 
-start:
-say("VOY A SER EL REY DE LOS PIRATAS")
-roar("SANJI TENGO HAMBRE")
-goto start
-"""
+print()
+print("ANTES")
+print("Alive:", creature.alive)
 
+simulator.tick()
 
-def compile_program(source):
-    tokens = Lexer(source).tokenize()
+print()
+print("DESPUÉS")
+print("Alive:", creature.alive)
+print(
+    "Está en el mundo:",
+    creature in world.creatures
+)
 
-    program = Parser(tokens).parse()
+print()
+print("LOGS:")
 
-    SemanticAnalyzer(program).validate()
-
-    return program
-
-
-try:
-    program = compile_program(source)
-
-    world = World(
-        width=5,
-        height=5
-    )
-
-    pirate = Creature(
-        program=program,
-        x=2,
-        y=2
-    )
-
-    world.add_creature(pirate)
-
-    action_request, free_actions = pirate.take_turn()
-
-    # Ejecutar SAY
-    execute_free_actions(
-        free_actions,
-        pirate,
-        world
-    )
-
-    # Ejecutar ROAR
-    if action_request is not None:
-        execute_action(
-            action_request,
-            pirate,
-            world
-        )
-
-    print("Logs:")
-    for log in world.logs:
-        print(log)
-
-    print()
-
-    print("Rugidos:")
-    for roar in world.roars:
-        print(roar["message"])
-
-
-except InstinctError as error:
-    print(f"Error: {error}")
+for log in world.logs:
+    print(log)

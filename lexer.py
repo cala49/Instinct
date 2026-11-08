@@ -1,3 +1,4 @@
+from errors import LexerError
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -120,9 +121,7 @@ class Lexer:
                 tokens.append(token)
                 continue
 
-            raise Exception(
-                f"Carácter desconocido '{char}' en línea {self.line}"
-            )
+            raise LexerError(f"Carácter desconocido '{char}'", self.line)
 
         tokens.append(
             Token(TokenType.EOF, None, self.line)
@@ -184,16 +183,11 @@ class Lexer:
             and self.current_char() != '"'
         ):
             if self.current_char() == "\n":
-                raise Exception(
-                    f"String sin cerrar en línea {line}"
-                )
-
+                raise LexerError("String sin cerrar", line)
             self.advance()
 
         if self.current_char() is None:
-            raise Exception(
-                f"String sin cerrar en línea {line}"
-            )
+            raise LexerError("String sin cerrar", line)
 
         value = self.text[start:self.position]
 

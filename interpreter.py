@@ -7,6 +7,7 @@ from ast_nodes import (
 )
 from errors import InstinctRuntimeError
 from dataclasses import dataclass
+import random
 
 @dataclass
 class ActionRequest:
@@ -22,6 +23,9 @@ class ExecutionContext:
     def __init__(self):
         self.variables = {}
         self.perceptions = {}
+        self.creature = None
+        self.world = None
+        
         self.constants = {
             "NONE": -1,
             "GROUND": 0,
@@ -30,9 +34,18 @@ class ExecutionContext:
             "ENEMY": 3,
         }
 
-    def resolve(self, name):
+    def bind_world(self, creature, world):
+        self.creature = creature
+        self.world = world
+
+    def resolve(self, name, line=None):
         if name in self.variables:
             return self.variables[name]
+
+        if name == "random":
+            if self.world is None:
+                raise InstinctRuntimeError("'random' necesita estar conectado al mundo")
+            return self.world.rng.randint(0, 99)
 
         if name in self.perceptions:
             return self.perceptions[name]
@@ -41,16 +54,75 @@ class ExecutionContext:
             return self.constants[name]
 
         raise InstinctRuntimeError(
-            f"Variable '{name}' usada antes de ser asignada"
+            f"Variable '{name}' usada antes de ser asignada", line
         )
 
     def assign(self, name, value):
         self.variables[name] = value
 
     def call_function(self, name, arguments):
-        raise InstinctRuntimeError(
-            f"La función '{name}' todavía no está conectada al mundo"
-        )
+        if name == "see":
+            return self.see(arguments[0], arguments[1])
+
+        if name == "name":
+            return self.get_name(arguments[0], arguments[1])
+
+        raise InstinctRuntimeError(f"Función desconocida '{name}'")
+
+    def see(self, x, y):
+        if not isinstance(x, int) or not isinstance(y, int):
+            raise InstinctRuntimeError("Las coordenadas deben ser números")
+
+        creature = self.creature
+        world = self.world
+
+        dist = max(abs(x - creature.x), abs(y - creature.y))
+
+        if dist > creature.vision:
+            return self.constants["NONE"]
+
+        if not world.is_inside(x, y):
+            return self.constants["OBJECT"]
+
+        cell = world.get_cell(x, y)
+
+        if cell.creature is not None:
+
+            if cell.creature.faction == creature.faction:
+                return self.constants["ALLY"]
+
+            return self.constants["ENEMY"]
+
+        if cell.object is not None:
+            return self.constants["OBJECT"]
+
+        return self.constants["GROUND"]
+
+    def get_name(self, x, y):
+
+        if not isinstance(x, int) or not isinstance(y, int):
+            raise InstinctRuntimeError("Las coordenadas deben ser números")
+
+        creature = self.creature
+        world = self.world
+
+        dist = max(abs(x - creature.x), abs(y - creature.y))
+
+        if dist > creature.vision:
+            return ""
+
+        if not world.is_inside(x, y):
+            return ""
+
+        cell = world.get_cell(x, y)
+
+        if cell.creature is not None:
+            return cell.creature.species
+
+        if cell.object is not None:
+            return cell.object.name
+
+        return cell.terrain.name
 
 # ============================================================
 # INTÉRPRETE
@@ -78,25 +150,6 @@ class Interpreter:
 
     def start(self):
         self.instruction_pointer = self.labels["start"]
-
-    def execute_turn(self):
-        lines_executed = 0
-
-        while lines_executed < 100:
-            if self.instruction_pointer >= len(self.statements):
-                self.instruction_pointer = self.labels["start"]
-                return None
-
-            statement = self.statements[self.instruction_pointer]
-
-            lines_executed += 1
-
-            action = self.execute_statement(statement)
-
-            if action is not None:
-                return action
-
-        return None
 
     def execute_statement(self, statement):
 

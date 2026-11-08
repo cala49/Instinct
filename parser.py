@@ -1,7 +1,3 @@
-from ast import expr
-from cProfile import label
-import token
-
 from lexer import TokenType
 from ast_nodes import (
     Program,
@@ -15,7 +11,7 @@ from ast_nodes import (
     Variable,
     UnaryOperation,
     BinaryOperation,
-    FunctionCall,
+    FunctionCall
 )
 from errors import ParserError
 
@@ -421,3 +417,20 @@ class Parser:
             f"Expresión no válida cerca de '{token.value}'",
             token.line
         )
+    def parse_function_call(self, identifier):
+        self.expect(
+            TokenType.LEFT_PAREN, "Se esperaba '('")
+
+        arguments = []
+
+        if not self.check(TokenType.RIGHT_PAREN):
+            arguments.append(self.parse_expression())
+
+            while self.check(TokenType.COMMA):
+                self.advance()
+
+                arguments.append(self.parse_expression())
+
+        self.expect(TokenType.RIGHT_PAREN, "Se esperaba ')'")
+
+        return FunctionCall(name=identifier.value, arguments=arguments, line=identifier.line)
