@@ -23,22 +23,34 @@ class MapView(QGraphicsView):
         item = self.itemAt(pos_pixel)
 
         if item and isinstance(item, QGraphicsRectItem):
+            row = item.data(0)
+            col = item.data(1)
 
-            selected_items = self.ventana.list_species.selectedItems()
+            if event.button() == Qt.LeftButton:
+                selected_items = self.ventana.list_species.selectedItems()
 
-            if selected_items:
+                if selected_items:
 
-                species_name = selected_items[0].text()
+                    species_name = selected_items[0].text()
 
-                row = item.data(0)
-                col = item.data(1)
+                    self.ventana.simulador.place_creature(row, col, species_name)
 
-                self.ventana.simulador.place_creature(row, col, species_name)
+                    state = self.ventana.simulador.get_state()
+                    self.ventana.render(state)
 
-                state = self.ventana.simulador.get_state()
-                self.ventana.render(state)
+                    self.ventana.log_message(f"Colocaste un {species_name} ! Fila: {row} Columna: {col}")
 
-                self.ventana.log_message(f"Colocaste un {species_name} ! Fila: {row} Columna: {col}")
+            elif event.button == Qt.RightButton:
+
+                state = self.ventana.silulador.get_state()
+
+                if (row,col) in state["creatures"]:
+
+                    self.ventana.simulador.remove_creature(row,col)
+                    self.ventana.render(state)
+                    self.ventana.log_message(f"Criatura eliminanda en Fila: {row} Columna: {col}")
+                else:
+                    self.ventana.log_message("No hay ninguna criatura en esa casilla")    
 
         super().mousePressEvent(event)
 
