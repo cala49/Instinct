@@ -4,8 +4,9 @@ from PySide6.QtGui import *
 
 class MapView(QGraphicsView):
 
-    def __init__(self):
+    def __init__(self, parent_ventana):
         super().__init__()
+        self.ventana = parent_ventana
     
     def mousePressEvent(self,event):
 
@@ -13,9 +14,26 @@ class MapView(QGraphicsView):
 
         item = self.itemAt(pos_pixel)
 
-        if item:
+        if item and isinstance(item, QGraphicsRectItem):
 
-            item.setBrush(QBrush(QColor("#a00231")))
+            selected_items = self.ventana.list_species.selectedItems()
+
+            if selected_items:
+
+                species_name = selected_items[0].text()
+                letter = species_name[0].upper()
+
+                center_x = item.rect().center().x()
+                center_y = item.rect().center().y()
+
+                text_item = self.scene().addText(letter)
+
+                text_bounds = text_item.boundingRect()
+                text_item.setPos(
+
+                    item.pos().x() + center_x - (text_bounds.width()/2),
+                    item.pos().y() + center_y - (text_bounds.width()/2)
+                )
 
             row = item.data(0)
             col = item.data(1)
@@ -80,7 +98,7 @@ class Ventana(QMainWindow):
         #Creamos la escena y la añadimos al mapa para mostrarla
 
         self.scene = QGraphicsScene()
-        self.map_view = MapView()
+        self.map_view = MapView(self)
         self.map_view.setScene(self.scene)
 
         self.draw_grid()
