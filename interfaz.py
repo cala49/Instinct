@@ -2,13 +2,14 @@ from PySide6.QtWidgets import *
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 
+
 class MapView(QGraphicsView):
 
     def __init__(self, parent_ventana):
         super().__init__()
         self.ventana = parent_ventana
 
-    def clear_creature(self):
+    def clear_creatures(self):
 
         for item in self.scene().items():
 
@@ -28,26 +29,19 @@ class MapView(QGraphicsView):
             if selected_items:
 
                 species_name = selected_items[0].text()
-                letter = species_name[0].upper()
 
-                center_x = item.rect().center().x()
-                center_y = item.rect().center().y()
+                row = item.data(0)
+                col = item.data(1)
 
-                text_item = self.scene().addText(letter)
+                self.ventana.simulador.place_creature(row, col, species_name)
 
-                text_bounds = text_item.boundingRect()
-                text_item.setPos(
+                state = self.ventana.simulador.get_state()
+                self.ventana.render(state)
 
-                    item.pos().x() + center_x - (text_bounds.width()/2),
-                    item.pos().y() + center_y - (text_bounds.width()/2)
-                )
-
-            row = item.data(0)
-            col = item.data(1)
-
-            self.ventana.log_message(f"Colocaste un {species_name} ! Fila: {row} Columna: {col}")
+                self.ventana.log_message(f"Colocaste un {species_name} ! Fila: {row} Columna: {col}")
 
         super().mousePressEvent(event)
+
 
 class Ventana(QMainWindow):
 
@@ -61,15 +55,15 @@ class Ventana(QMainWindow):
         self.timer = QTimer()
         self.timer.timeout.connect(self.execute_tick)
 
-        #Layout Principal
+        # Layout Principal
 
         self.main_layout = QVBoxLayout()
 
-        #Layout superior
+        # Layout superior
 
         self.top_layout = QHBoxLayout()
 
-        #Panel izquierdo
+        # Panel izquierdo
 
         self.left_panel = QFrame()
         self.left_panel.setStyleSheet("background: black; color: gold")
@@ -77,7 +71,7 @@ class Ventana(QMainWindow):
 
         left_layout = QVBoxLayout()
 
-        #Lista de Mapas
+        # Lista de Mapas
 
         left_layout.addWidget(QLabel("Mapas disponibles:"))
         self.list_maps = QListWidget()
@@ -85,7 +79,7 @@ class Ventana(QMainWindow):
 
         left_layout.addWidget(self.list_maps)
 
-        #Lista de especies
+        # Lista de especies
           
         left_layout.addWidget(QLabel("Lista de especies"))
         self.list_species = QListWidget()
@@ -95,14 +89,14 @@ class Ventana(QMainWindow):
         
         self.left_panel.setLayout(left_layout)
         
-        #Panel Central 
+        # Panel Central 
 
         self.center_panel = QFrame()
         self.center_panel.setStyleSheet("background: blue; color: gold;")
 
         center_layout = QVBoxLayout()
 
-        #Creamos la escena y la añadimos al mapa para mostrarla
+        # Creamos la escena y la añadimos al mapa para mostrarla
 
         self.scene = QGraphicsScene()
         self.map_view = MapView(self)
@@ -112,7 +106,7 @@ class Ventana(QMainWindow):
         
         center_layout.addWidget(self.map_view)
 
-        #Controles de Simulacion
+        # Controles de Simulación
 
         controls_layout = QHBoxLayout()
 
@@ -128,7 +122,7 @@ class Ventana(QMainWindow):
         self.btn_reset = QPushButton("Reset")
         self.btn_reset.clicked.connect(self.reset_simulation)
 
-        #Selector de velocidad
+        # Selector de velocidad
 
         self.combo_speed = QComboBox()
         self.combo_speed.addItems(["x1","x2","x10"])
@@ -144,12 +138,12 @@ class Ventana(QMainWindow):
         center_layout.addLayout(controls_layout)
         self.center_panel.setLayout(center_layout)
 
-        #Agregamos al layout superior los paneles para organizar la parte de arriba de la ventana
+        # Agregamos al layout superior los paneles para organizar la parte de arriba de la ventana
 
         self.top_layout.addWidget(self.left_panel)
         self.top_layout.addWidget(self.center_panel)
 
-        #Panel inferior
+        # Panel inferior
 
         self.bottom_panel = QFrame()
         self.bottom_panel.setStyleSheet("background: black; color: gold; font: 14px;")
@@ -167,12 +161,12 @@ class Ventana(QMainWindow):
         
         self.bottom_panel.setLayout(bottom_layout)
 
-        #Unimos todo en el layout principal
+        # Unimos todo en el layout principal
 
         self.main_layout.addLayout(self.top_layout)
         self.main_layout.addWidget(self.bottom_panel)
 
-        #Ponemos todo en la ventana principal 
+        # Ponemos todo en la ventana principal 
     
         self.widget = QWidget()
         self.widget.setLayout(self.main_layout)
@@ -180,7 +174,7 @@ class Ventana(QMainWindow):
 
     current_interval = 1000 
 
-    #M'etodos
+    # Métodos
 
     def draw_grid(self):
 
@@ -229,13 +223,12 @@ class Ventana(QMainWindow):
         self.timer.stop()
         self.simulador.reset()
 
-        self.map_view.clear_creature()
+        self.map_view.clear_creatures()
         self.label_logs.clear()
 
         state = self.simulador.get_state()
         self.render(state)
         self.log_message("Simulación reiniciada")
-
 
     def change_speed(self,index):
 
@@ -256,7 +249,29 @@ class Ventana(QMainWindow):
 
     def render(self,state):
 
-        pass
+        self.map_view.clear_creatures()
+
+        creatures = state.get("creatures", {})
+
+        for (row, col), species_name in creatures.items():
+            self.draw_creature(row, col, species_name)
+
+    def draw_creature(self, row, col, species_name):
+        
+        letter = species_name[0].upper()
+
+        tile_size = 32
+        x = col * tile_size
+        y = row * tile_size
+
+        text_item = self.scene.addText(letter)
+
+        text_bounds = text_item.boundingRect()
+
+        text_item.setPos(
+            x + (tile_size/2) - (text_bounds.width()/2),
+            y + (tile_size/2) - (text_bounds.height()/2)
+        )       
 
     def log_message(self, message):
 
