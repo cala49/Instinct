@@ -1,6 +1,13 @@
 from PySide6.QtWidgets import *
 from PySide6.QtCore import *
+from PySide6.QtGui import *
 from __feature__ import snake_case, true_property
+
+class MapView(QGraphicsView):
+
+    def __init__(self):
+        super().__init__()
+    pass
 
 
 class Ventana(QMainWindow):
@@ -56,11 +63,15 @@ class Ventana(QMainWindow):
 
         center_layout = QVBoxLayout()
 
-        self.label_state = QLabel("Esperando inicio...")
-        self.label_state.alignment = Qt.AlignCenter
-        self.label_state.style_sheet = "font-size: 20px; color: gold"
+        #Creamos la escena y la añadimos al mapa para mostrarla
 
-        center_layout.add_widget(self.label_state)
+        self.scene = QGraphicsScene()
+        self.map_view = MapView()
+        self.map_view.set_scene(self.scene)
+
+        self.draw_grid()
+        
+        center_layout.add_widget(self.map_view)
 
         #Controles de Simulacion
 
@@ -126,7 +137,34 @@ class Ventana(QMainWindow):
         self.widget.set_layout(self.main_layout)
         self.set_central_widget(self.widget)
 
-    current_interval = 1000    
+    current_interval = 1000 
+
+    #M'etodos
+
+    def draw_grid(self):
+
+        self.scene.clear()
+        rows = 10
+        cols = 10
+        tile_size = 32
+
+        bg_color = QBrush(QColor("#a0d8ef"))
+        line_color = QPen(QColor("#555555"))
+
+        for row in range(rows):
+            for col in range(cols):
+
+                x = col * tile_size
+                y = row * tile_size
+
+                rect = QRect(x, y, tile_size, tile_size)
+
+                tile = self.scene.add_rect(rect, line_color, bg_color)
+
+                tile.set_data(0, row)
+                tile.set_data(1, col)
+
+        self.scene.scene_rect = QRect(0, 0, float(cols * tile_size), float(rows * tile_size))          
 
     def excecute_tick(self):
 
@@ -172,5 +210,4 @@ class Ventana(QMainWindow):
 
     def render(self,state):
 
-        current_tick = state["tick"]
-        self.label_state.text = f"Tick actual: {state['tick']}"
+        pass
