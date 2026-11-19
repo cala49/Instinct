@@ -45,7 +45,7 @@ class MapView(QGraphicsView):
             row = item.data(0)
             col = item.data(1)
 
-            print(f"Clic en la casilla! Fila: {row} Columna: {col}")
+            self.ventana.log_message(f"Colocaste un {species_name} ! Fila: {row} Columna: {col}")
 
         super().mousePressEvent(event)
 
@@ -152,14 +152,16 @@ class Ventana(QMainWindow):
         #Panel inferior
 
         self.bottom_panel = QFrame()
-        self.bottom_panel.setStyleSheet("background: black; color: gold;")
+        self.bottom_panel.setStyleSheet("background: black; color: gold; font: 14px;")
         self.bottom_panel.setFixedHeight(150)
 
         bottom_layout = QVBoxLayout()
 
-        self.label_logs = QLabel("Consola de logs: Esperando eventos")
+        self.label_logs = QPlainTextEdit()
+        self.label_logs.setReadOnly(True)
         self.label_logs.setStyleSheet("color: gold; font-family: monospace")
-        self.label_logs.setAlignment(Qt.AlignCenter)
+
+        self.label_logs.setPlainText("Esperando eventos...")
 
         bottom_layout.addWidget(self.label_logs)
         
@@ -210,17 +212,17 @@ class Ventana(QMainWindow):
         self.simulador.step()
         state = self.simulador.get_state()
         self.render(state)
-        self.label_logs.setText(f"Turno {state['tick']} ejecutado")
+        self.log_message(f"Turno {state['tick']} ejecutado")
 
     def play_simulation(self):
 
         self.timer.start(self.current_interval)
-        self.label_logs.setText("Simulación iniciada")
+        self.log_message("Simulación iniciada")
 
     def pause_simulation(self):
 
         self.timer.stop()
-        self.label_logs.setText("Simulación pausada")
+        self.log_message("Simulación pausada")
 
     def reset_simulation(self):
 
@@ -228,10 +230,11 @@ class Ventana(QMainWindow):
         self.simulador.reset()
 
         self.map_view.clear_creature()
+        self.label_logs.clear()
 
         state = self.simulador.get_state()
         self.render(state)
-        self.label_logs.setText("Simulación reiniciada")
+        self.log_message("Simulación reiniciada")
 
 
     def change_speed(self,index):
@@ -249,8 +252,12 @@ class Ventana(QMainWindow):
             self.timer.stop()
             self.timer.start(self.current_interval)               
 
-        self.label_logs.setText(f"Velocidad cambiada a : {self.combo_speed.currentText()}")
+        self.log_message(f"Velocidad cambiada a : {self.combo_speed.currentText()}")
 
     def render(self,state):
 
         pass
+
+    def log_message(self, message):
+
+        self.label_logs.appendPlainText(f"> {message}")
