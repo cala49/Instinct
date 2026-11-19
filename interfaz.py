@@ -7,6 +7,13 @@ class MapView(QGraphicsView):
     def __init__(self, parent_ventana):
         super().__init__()
         self.ventana = parent_ventana
+
+    def clear_creature(self):
+
+        for item in self.scene().items():
+
+            if isinstance(item, QGraphicsTextItem):
+                self.scene().removeItem(item)    
     
     def mousePressEvent(self,event):
 
@@ -219,9 +226,13 @@ class Ventana(QMainWindow):
 
         self.timer.stop()
         self.simulador.reset()
+
+        self.map_view.clear_creature()
+
         state = self.simulador.get_state()
         self.render(state)
         self.label_logs.setText("Simulación reiniciada")
+
 
     def change_speed(self,index):
 
