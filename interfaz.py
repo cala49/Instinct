@@ -10,7 +10,10 @@ class Ventana(QMainWindow):
         
         self.simulador = simulador
         
-        self.resize(800,600)
+        self.resize(900,650)
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.excecute_tick)
 
         #Layout Principal
 
@@ -24,23 +27,25 @@ class Ventana(QMainWindow):
 
         self.left_panel = QFrame()
         self.left_panel.style_sheet = "background: black; color: gold"
-        self.left_panel.set_fixed_width(200)
+        self.left_panel.set_fixed_width(220)
 
         left_layout = QVBoxLayout()
 
-        self.label_species = QLabel("Lista de especies")
-        self.label_species.style_sheet = "color: gold"
-        self.label_species.alignment = Qt.AlignCenter
+        #Lista de Mapas
 
-        left_layout.add_widget(self.label_species)
+        left_layout.add_widget(QLabel("Mapas disponibles:"))
+        self.list_maps = QListWidget()
+        self.list_maps.add_items(["Isla de los Piratas","Marineford","East Blue"])
 
-        self.button = QPushButton("Step")
-        self.button.style_sheet = ("background: gray; color: gold;")
-        self.button.set_fixed_size(80,30)
+        left_layout.add_widget(self.list_maps)
 
-        self.button.clicked.connect(self.excecute_tick)
-        
-        left_layout.add_widget(self.button, alignment = Qt.AlignBottom) #coloca el bottom abajo
+        #Lista de especies
+          
+        left_layout.add_widget(QLabel("Lista de especies"))
+        self.list_species = QListWidget()
+        self.list_species.add_items(["Pirata","Marine","Espadachin"])
+
+        left_layout.add_widget(self.list_species)
         
         self.left_panel.set_layout(left_layout)
         
@@ -57,6 +62,36 @@ class Ventana(QMainWindow):
 
         center_layout.add_widget(self.label_state)
 
+        #Controles de Simulacion
+
+        controls_layout = QHBoxLayout()
+
+        self.btn_play = QPushButton("Play")
+        self.btn_play.clicked.connect(self.play_simulation)
+
+        self.btn_pause = QPushButton("Pause")
+        self.btn_pause.clicked.connect(self.pause_simulation)
+
+        self.btn_step = QPushButton("Step")
+        self.btn_step.clicked.connect(self.excecute_tick)
+
+        self.btn_reset = QPushButton("Reset")
+        self.btn_reset.clicked.connect(self.reset_simulation)
+
+        #Selector de velocidad
+
+        self.combo_speed = QComboBox()
+        self.combo_speed.add_items(["x1","x2","x10"])
+        self.combo_speed.currentIndexChanged.connect(self.change_speed)
+
+        controls_layout.add_widget(self.btn_play)
+        controls_layout.add_widget(self.btn_pause)
+        controls_layout.add_widget(self.btn_step)
+        controls_layout.add_widget(self.btn_reset)
+        controls_layout.add_widget(QLabel("Velocidad"))
+        controls_layout.add_widget(self.combo_speed)
+        
+        center_layout.add_layout(controls_layout)
         self.center_panel.set_layout(center_layout)
 
         #Agregamos al layout superior los paneles para organizar la parte de arriba de la ventana
@@ -91,12 +126,51 @@ class Ventana(QMainWindow):
         self.widget.set_layout(self.main_layout)
         self.set_central_widget(self.widget)
 
+    current_interval = 1000    
+
     def excecute_tick(self):
 
         self.simulador.step()
         state = self.simulador.get_state()
         self.render(state)
+        self.label_logs.text = f"Turno {state['tick']} ejecutado"
+
+    def play_simulation(self):
+
+        self.timer.start(self.current_interval)
+        self.label_logs.text = "Simulación iniciada"
+
+    def pause_simulation(self):
+
+        self.timer.stop()
+        self.label_logs.text = "Simulación pausada"
+
+    def reset_simulation(self):
+
+        self.timer.stop()
+        self.simulador.reset()
+        state = self.simulador.get_state()
+        self.render(state)
+        self.label_logs.text = "Simulación reiniciada"
+
+    def change_speed(self,index):
+
+        if index == 0:
+            self.current_interval = 1000
+
+        elif index == 1:
+            self.current_interval = 500
+
+        elif index == 2:
+            self.current_interval = 100
+
+        if self.timer.active:
+            self.timer.stop()
+            self.timer.start(self.current_interval)               
+
+        self.label_logs.text = f"Velocidad cambiada a : {self.combo_speed.current_text}"
 
     def render(self,state):
 
+        current_tick = state["tick"]
         self.label_state.text = f"Tick actual: {state['tick']}"
